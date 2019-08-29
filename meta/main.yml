@@ -1,0 +1,17 @@
+galaxy_info:
+  role_name: igtf_cas
+  author: Martin Kuba
+  description: Installs IGTF Certification Authorities certificates and periodic fetching of their CRLs
+  company: CESNET
+  license: Apache
+  min_ansible_version: 2.5
+  platforms:
+   - name: Debian
+     versions:
+     - jessie
+     - stretch
+     - buster
+  galaxy_tags:
+    - "system"
+    - "web"
+dependencies: []

@@ -10,14 +10,12 @@
     that:
       - ansible_distribution == "Debian"
       - ansible_distribution_major_version in [ "8", "9", "10" ]
-    msg: "Only Debian 8+ is supported, this is {{ansible_distribution}} {{ansible_distribution_major_version}}"
+    msg: "Only Debian 8+ is supported, this is {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
 
 # IGTF certification authorities
 - name: Install gpg
   apt:
     name: gpg
-    state: latest
-    update_cache: yes
 
 - name: Add EGI IGTF repository key
   apt_key:
@@ -34,13 +32,11 @@
 - name: Install latest IGTF certificates
   apt:
     name: ca-policy-egi-core
-    state: latest
     update_cache: yes
 
 - name: Install fetch-crl
   apt:
     name: fetch-crl
-    state: latest
     update_cache: yes
 
 - name: Disable error emails from fetch-crl
@@ -64,7 +60,7 @@
 
 - name: detect fetch-crl postexec hook
   set_fact:
-    postexec_supported: "{{ansible_facts.packages['fetch-crl'][0].version is version_compare('3.0.18', '>=')}}"
+    postexec_supported: "{{ ansible_facts.packages['fetch-crl'][0].version is version_compare('3.0.18', '>=') }}"
 
 - name: Configure fetch-crl to call script for restarting Apache after fetching new CRLs
   when: postexec_supported

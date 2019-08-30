@@ -25,7 +25,7 @@ Example Playbook
 
     - hosts: servers
       roles:
-         - martin-kuba.igtf_cas
+         - cesnet.igtf_cas
 
 License
 -------
@@ -35,4 +35,4 @@ Apache
 Author Information
 ------------------
 
-Martin Kuba, CESNET
+Martin Kuba <makub@cesnet.cz>, CESNET

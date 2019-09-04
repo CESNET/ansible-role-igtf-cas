@@ -58,23 +58,26 @@
   package_facts:
     manager: "apt"
 
-- name: detect fetch-crl postexec hook
-  set_fact:
-    postexec_supported: "{{ ansible_facts.packages['fetch-crl'][0].version is version_compare('3.0.18', '>=') }}"
+- name: register Apache restarts if Apache is installed
+  when: 'apache2' in ansible_facts.packages
+  block:
+    - name: detect fetch-crl postexec hook
+      set_fact:
+        postexec_supported: "{{ ansible_facts.packages['fetch-crl'][0].version is version_compare('3.0.18', '>=') }}"
 
-- name: Configure fetch-crl to call script for restarting Apache after fetching new CRLs
-  when: postexec_supported
-  copy:
-    dest: /etc/fetch-crl.d/restart-apache.conf
-    content: |
-      postexec=/root/fetch-crl-restart-apache.sh
+    - name: Configure fetch-crl to call script for restarting Apache after fetching new CRLs
+      when: postexec_supported
+      copy:
+        dest: /etc/fetch-crl.d/restart-apache.conf
+        content: |
+          postexec=/root/fetch-crl-restart-apache.sh
 
-- name: Configure Apache restart as cron job
-  when: not postexec_supported
-  cron:
-    name: "Cron job restarting Apache after /etc/cron.d/fetch-crl fetches new CRLs"
-    cron_file: restart-apache
-    hour: "*/6"
-    minute: 57
-    user: root
-    job: /root/fetch-crl-restart-apache.sh
+    - name: Configure Apache restart as cron job
+      when: not postexec_supported
+      cron:
+        name: "Cron job restarting Apache after /etc/cron.d/fetch-crl fetches new CRLs"
+        cron_file: restart-apache
+        hour: "*/6"
+        minute: 57
+        user: root
+        job: /root/fetch-crl-restart-apache.sh

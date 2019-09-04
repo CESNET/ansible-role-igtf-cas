@@ -1,0 +1,83 @@
+---
+- name:  Ansible 2.5+ required
+  assert:
+    that:
+      - ansible_version is defined
+      - ansible_version.full is version_compare('2.5', '>=')
+    msg: "Required Ansible version is 2.5+ with import_role and package_facts"
+- name: Require Debian
+  assert:
+    that:
+      - ansible_distribution == "Debian"
+      - ansible_distribution_major_version in [ "8", "9", "10" ]
+    msg: "Only Debian 8+ is supported, this is {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+
+# IGTF certification authorities
+- name: Install gpg
+  apt:
+    name: gpg
+
+- name: Add EGI IGTF repository key
+  apt_key:
+    id: 3CDBBC71
+    url: "https://dist.eugridpma.info/distribution/igtf/current/GPG-KEY-EUGridPMA-RPM-3"
+    state: present
+
+- name: Add EGI IGTF repository
+  apt_repository:
+    repo: "deb http://repository.egi.eu/sw/production/cas/1/current egi-igtf core"
+    filename: "igtf"
+    state: present
+
+- name: Install latest IGTF certificates
+  apt:
+    name: ca-policy-egi-core
+    update_cache: yes
+
+- name: Install fetch-crl
+  apt:
+    name: fetch-crl
+    update_cache: yes
+
+- name: Disable error emails from fetch-crl
+  lineinfile:
+    dest: /etc/fetch-crl.conf
+    insertafter: EOF
+    line: "noerrors"
+
+- name: Script for restarting Apache after fetching new CRLs
+  copy:
+    dest: /root/fetch-crl-restart-apache.sh
+    mode: 0755
+    content: |
+      #!/bin/bash
+      date --rfc-3339=seconds >>/var/log/fetch-crl-apache.log
+      systemctl restart apache2 >>/var/log/fetch-crl-apache.log 2>&1
+
+- name: get package facts
+  package_facts:
+    manager: "apt"
+
+- name: register Apache restarts if Apache is installed
+  when: "'apache2' in ansible_facts.packages"
+  block:
+    - name: detect fetch-crl postexec hook
+      set_fact:
+        postexec_supported: "{{ ansible_facts.packages['fetch-crl'][0].version is version_compare('3.0.18', '>=') }}"
+
+    - name: Configure fetch-crl to call script for restarting Apache after fetching new CRLs
+      when: postexec_supported
+      copy:
+        dest: /etc/fetch-crl.d/restart-apache.conf
+        content: |
+          postexec=/root/fetch-crl-restart-apache.sh
+
+    - name: Configure Apache restart as cron job
+      when: not postexec_supported
+      cron:
+        name: "Cron job restarting Apache after /etc/cron.d/fetch-crl fetches new CRLs"
+        cron_file: restart-apache
+        hour: "*/6"
+        minute: 57
+        user: root
+        job: /root/fetch-crl-restart-apache.sh

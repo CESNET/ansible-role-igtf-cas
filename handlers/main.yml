@@ -1,0 +1,6 @@
+---
+- name: "fetch CRLs"
+  command: fetch-crl -q
+  args:
+    creates: "/etc/grid-security/certificates/dbf09133.r0"
+  listen: "fetch CRLs"

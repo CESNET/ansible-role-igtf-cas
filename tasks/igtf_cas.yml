@@ -38,6 +38,7 @@
   apt:
     name: fetch-crl
     update_cache: yes
+  notify: "fetch CRLs"
 
 - name: Disable error emails from fetch-crl
   lineinfile:

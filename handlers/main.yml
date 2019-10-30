@@ -4,3 +4,7 @@
   args:
     creates: "/etc/grid-security/certificates/dbf09133.r0"
   listen: "fetch CRLs"
+
+- name: "rehash certificates in /etc/grid-security/certificates"
+  command: c_rehash /etc/grid-security/certificates
+  listen: "rehash certs"

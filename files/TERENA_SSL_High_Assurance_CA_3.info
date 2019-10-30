@@ -1,0 +1,13 @@
+# Makubova definice
+#
+alias = TERENA_SSL_High_Assurance_CA_3
+url = https://www.terena.org/activities/tcs/
+ca_url = https://pki.cesnet.cz/certs/TERENA_SSL_High_Assurance_CA_3.pem
+crl_url = http://crl3.digicert.com/TERENASSLHighAssuranceCA3.crl;http://crl4.digicert.com/TERENASSLHighAssuranceCA3.crl
+policy_url = https://www.terena.org/activities/tcs/repository/
+requires = DigiCert_High_Assurance_EV_Root_CA
+email = tcs-pma@terena.org
+status = accredited:mics
+version = 1.102
+sha1fp.0 = A7:8A:AB:DE:7F:5B:77:15:40:D3:33:B5:05:87:4C:82:04:AA:D2:06
+subjectdn = "/C=NL/ST=Noord-Holland/L=Amsterdam/O=TERENA/CN=TERENA SSL High Assurance CA 3"

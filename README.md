@@ -12,7 +12,7 @@ Depending on fetch-crl version, it installs a hook or a cron job that restarts A
 Role Variables
 --------------
 
-No variables are used.
+* igtf_cas_install_terena_ssl - installs the "TERENA SSL CA 3" and "TERENA SSL High Assurance CA 3" CAs for web servers to be accepted as client CAs, default is False
 
 Dependencies
 ------------
@@ -24,6 +24,8 @@ Example Playbook
 
 
     - hosts: servers
+      vars: 
+        igtf_cas_install_terena_ssl: True
       roles:
          - cesnet.igtf_cas
 

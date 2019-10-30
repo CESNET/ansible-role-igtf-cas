@@ -1,0 +1,11 @@
+#
+#
+alias = DigiCert_High_Assurance_EV_Root_CA
+ca_url = https://pki.cesnet.cz/certs/DigiCert_High_Assurance_EV_Root_CA.pem
+crl_url = http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl
+email = support@DigiCert.com
+status = accredited:classic
+url = http://www.digicert-grid.com/
+version = 1.102
+sha1fp.0 = 5F:B7:EE:06:33:E2:59:DB:AD:0C:4C:9A:E6:D3:8F:1A:61:C7:DC:25
+subjectdn = "/C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert High Assurance EV Root CA"

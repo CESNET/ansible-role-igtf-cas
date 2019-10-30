@@ -83,5 +83,19 @@
         user: root
         job: /root/fetch-crl-restart-apache.sh
 
+- name: "install TERENA_SSL_CA_3 and TERENA_SSL_High_Assurance_CA_3 to be accepted as client CAs"
+  when: igtf_cas_install_terena_ssl
+  loop:
+    - TERENA_SSL_CA_3.pem
+    - TERENA_SSL_CA_3.info
+    - TERENA_SSL_High_Assurance_CA_3.info
+    - TERENA_SSL_High_Assurance_CA_3.pem
+    - DigiCert_High_Assurance_EV_Root_CA.info
+    - DigiCert_High_Assurance_EV_Root_CA.pem
+  copy:
+    dest: /etc/grid-security/certificates/
+    src: "{{ item }}"
+  notify: "rehash certs"
+
 - name: "flush handlers"
   meta: flush_handlers

@@ -1,1 +1,3 @@
 igtf_cas_install_terena_ssl: False
+configure_apache_restart_after_fetch: yes
+fetch_crl_restart_script: files/fetch-crl-restart-apache-container.sh

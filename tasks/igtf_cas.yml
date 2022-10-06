@@ -1,87 +1,66 @@
 ---
-- name:  Ansible 2.5+ required
+- name:  "Ansible 2.5+ required"
   assert:
     that:
       - ansible_version is defined
-      - ansible_version.full is version_compare('2.5', '>=')
-    msg: "Required Ansible version is 2.5+ with import_role and package_facts"
-- name: Require Debian
+      - ansible_version.full is version_compare('2.13', '>=')
+    msg: "Required Ansible version is 2.13+"
+- name: "Require Debian"
   assert:
     that:
       - ansible_distribution == "Debian"
-      - ansible_distribution_major_version in [ "8", "9", "10" ]
-    msg: "Only Debian 8+ is supported, this is {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+      - ansible_distribution_major_version in [ "10", "11" ]
+    msg: "Only Debian 10+ is supported, this is {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
 
 # IGTF certification authorities
-- name: Install gpg
+- name: "install gpg"
   apt:
     name: gpg
 
-- name: Add EGI IGTF repository key
+- name: "add EGI IGTF repository key"
   apt_key:
     id: 3CDBBC71
     url: "https://dist.eugridpma.info/distribution/igtf/current/GPG-KEY-EUGridPMA-RPM-3"
     state: present
 
-- name: Add EGI IGTF repository
+- name: "add EGI IGTF repository"
   apt_repository:
     repo: "deb http://repository.egi.eu/sw/production/cas/1/current egi-igtf core"
     filename: "igtf"
     state: present
 
-- name: Install latest IGTF certificates
+- name: "install latest IGTF certificates"
   apt:
     name: ca-policy-egi-core
+    state: present
     update_cache: yes
+  register: egi_core_policy
 
-- name: Install fetch-crl
+- name: "install fetch-crl"
   apt:
     name: fetch-crl
     update_cache: yes
   notify: "fetch CRLs"
 
-- name: Disable error emails from fetch-crl
+- name: "disable error emails from fetch-crl"
   lineinfile:
     dest: /etc/fetch-crl.conf
     insertafter: EOF
     line: "noerrors"
 
-- name: Script for restarting Apache after fetching new CRLs
+- name: "script for restarting Apache after fetching new CRLs"
+  when: configure_apache_restart_after_fetch
   copy:
-    dest: /root/fetch-crl-restart-apache.sh
+    dest: /etc/grid-security/fetch-crl-restart-apache.sh
     mode: 0755
+    src: "{{ fetch_crl_restart_script }}"
+
+- name: "configure fetch-crl to call script for restarting Apache after fetching new CRLs"
+  when: configure_apache_restart_after_fetch
+  copy:
+    dest: /etc/fetch-crl.d/restart-apache.conf
     content: |
-      #!/bin/bash
-      date --rfc-3339=seconds >>/var/log/fetch-crl-apache.log
-      systemctl restart apache2 >>/var/log/fetch-crl-apache.log 2>&1
-
-- name: get package facts
-  package_facts:
-    manager: "apt"
-
-- name: register Apache restarts if Apache is installed
-  when: "'apache2' in ansible_facts.packages"
-  block:
-    - name: detect fetch-crl postexec hook
-      set_fact:
-        postexec_supported: "{{ ansible_facts.packages['fetch-crl'][0].version is version_compare('3.0.18', '>=') }}"
-
-    - name: Configure fetch-crl to call script for restarting Apache after fetching new CRLs
-      when: postexec_supported
-      copy:
-        dest: /etc/fetch-crl.d/restart-apache.conf
-        content: |
-          postexec=/root/fetch-crl-restart-apache.sh
-
-    - name: Configure Apache restart as cron job
-      when: not postexec_supported
-      cron:
-        name: "Cron job restarting Apache after /etc/cron.d/fetch-crl fetches new CRLs"
-        cron_file: restart-apache
-        hour: "*/6"
-        minute: 57
-        user: root
-        job: /root/fetch-crl-restart-apache.sh
+      postexec=/etc/grid-security/fetch-crl-restart-apache.sh
 
 - name: "install TERENA_SSL_CA_3 and TERENA_SSL_High_Assurance_CA_3 to be accepted as client CAs"
   when: igtf_cas_install_terena_ssl
@@ -96,6 +75,20 @@
     dest: /etc/grid-security/certificates/
     src: "{{ item }}"
   notify: "rehash certs"
+
+- name: "create script for filtering out CAs confusing Apache"
+  copy:
+    src: files/accepted_cas.sh
+    dest: /etc/grid-security/accepted_cas.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "create filtered list of CAs"
+#  when: egi_core_policy.changed
+  command:
+    cmd: /etc/grid-security/accepted_cas.sh
+    chdir: /etc/grid-security/certificates/
 
 - name: "flush handlers"
   meta: flush_handlers

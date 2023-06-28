@@ -5,29 +5,46 @@
       - ansible_version is defined
       - ansible_version.full is version_compare('2.13', '>=')
     msg: "Required Ansible version is 2.13+"
-- name: "Require Debian"
+    quiet: true
+- name: "Debian version check"
   assert:
     that:
       - ansible_distribution == "Debian"
-      - ansible_distribution_major_version in [ "10", "11" ]
-    msg: "Only Debian 10+ is supported, this is {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+      - ansible_distribution_major_version is version('10','>=')
+    msg: "Required version is 10+, this is {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+    quiet: true
 
 # IGTF certification authorities
 - name: "install gpg"
   apt:
     name: gpg
 
+- name: "create /etc/apt/keyrings"
+  file:
+    state: directory
+    path: /etc/apt/keyrings
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: "add EGI IGTF repository key"
-  apt_key:
-    id: 3CDBBC71
+  get_url:
     url: "https://dist.eugridpma.info/distribution/igtf/current/GPG-KEY-EUGridPMA-RPM-3"
-    state: present
+    dest: /etc/apt/keyrings/igtf.asc
+    force: false
+
+- name: "clean old line without signed-by"
+  lineinfile:
+    path: /etc/apt/sources.list.d/igtf.list
+    line: "deb http://repository.egi.eu/sw/production/cas/1/current egi-igtf core"
+    state: absent
 
 - name: "add EGI IGTF repository"
   apt_repository:
-    repo: "deb http://repository.egi.eu/sw/production/cas/1/current egi-igtf core"
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/igtf.asc] http://repository.egi.eu/sw/production/cas/1/current egi-igtf core"
     filename: "igtf"
     state: present
+    update_cache: true
 
 - name: "install latest IGTF certificates"
   apt:

@@ -79,6 +79,12 @@
     content: |
       postexec=/etc/grid-security/fetch-crl-restart-apache.sh
 
+- name: "enable and start fetch-crl-cron service"
+  service:
+    name: fetch-crl-cron
+    enabled: true
+    state: started
+
 - name: "install TERENA_SSL_CA_3 and TERENA_SSL_High_Assurance_CA_3 to be accepted as client CAs"
   when: igtf_cas_install_terena_ssl
   loop:

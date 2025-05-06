@@ -29,7 +29,7 @@
 
 - name: "add EGI IGTF repository key"
   get_url:
-    url: "https://dist.eugridpma.info/distribution/igtf/current/GPG-KEY-EUGridPMA-RPM-3"
+    url: "https://dl.igtf.net/distribution/current/GPG-KEY-EUGridPMA-RPM-4"
     dest: /etc/apt/keyrings/igtf.asc
     force: false
 

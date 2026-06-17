@@ -28,23 +28,28 @@
     mode: '0755'
 
 - name: "add EGI IGTF repository key"
-  get_url:
+  ansible.builtin.get_url:
     url: "https://dl.igtf.net/distribution/current/GPG-KEY-EUGridPMA-RPM-4"
     dest: /etc/apt/keyrings/igtf.asc
+    mode: '0644'
     force: false
 
-- name: "clean old line without signed-by"
-  lineinfile:
-    path: /etc/apt/sources.list.d/igtf.list
-    line: "deb http://repository.egi.eu/sw/production/cas/1/current egi-igtf core"
-    state: absent
-
 - name: "add EGI IGTF repository"
-  apt_repository:
-    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/igtf.asc] http://repository.egi.eu/sw/production/cas/1/current egi-igtf core"
-    filename: "igtf"
+  ansible.builtin.deb822_repository:
+    name: igtf
+    types: deb
+    architectures: amd64
+    signed_by: "/etc/apt/keyrings/igtf.asc"
+    uris: ["http://repository.egi.eu/sw/production/cas/1/current"]
+    suites: "egi-igtf"
+    components: [ "core" ]
     state: present
-    update_cache: true
+  register: igtf_repo
+
+- name: "update apt cache"
+  apt:
+    update_cache: yes
+  when: igtf_repo.changed
 
 - name: "install latest IGTF certificates"
   apt:
